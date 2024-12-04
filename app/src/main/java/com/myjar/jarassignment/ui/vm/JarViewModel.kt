@@ -1,5 +1,6 @@
 package com.myjar.jarassignment.ui.vm
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myjar.jarassignment.createRetrofit
@@ -12,15 +13,17 @@ import kotlinx.coroutines.launch
 
 class JarViewModel : ViewModel() {
 
-    private val _listStringData = MutableStateFlow<List<ComputerItem>>(emptyList())
-    val listStringData: StateFlow<List<ComputerItem>>
-        get() = _listStringData
+    private var _listStringData = MutableStateFlow<List<ComputerItem>>(emptyList())
+    var listStringData: StateFlow<List<ComputerItem>> = _listStringData
 
     private val repository: JarRepository = JarRepositoryImpl(createRetrofit())
 
     fun fetchData() {
         viewModelScope.launch {
-            repository.fetchResults()
+            repository.fetchResults().collect{
+                _listStringData.value=it
+                Log.d("AAAA", it[0].toString())
+            }
         }
     }
 }
