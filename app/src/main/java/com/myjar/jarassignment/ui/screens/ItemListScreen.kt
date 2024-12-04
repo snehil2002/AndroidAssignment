@@ -9,14 +9,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -32,22 +40,44 @@ fun ItemListScreen(
     navController: NavController
 ) {
     val items = viewModel.listStringData.collectAsState()
-
-
-    if (items.value.isNullOrEmpty()){
-        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+    var searchQuery by remember {
+        mutableStateOf("")
     }
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        items(items.value) { item ->
-            ItemCard(
-                item = item,
-                onClick = { navController.navigate("${AppScreens.ItemDetailScreen.name}/${item.id}") }
+    val keyboardController= LocalSoftwareKeyboardController.current
+    val searchRes =items.value.filter {
+        it.name.contains(searchQuery.trim(), ignoreCase = true)
+    }
+
+    if (items.value.isNullOrEmpty()) {
+        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+    } else {
+        Column {
+            TextField(
+                value = searchQuery, onValueChange = {
+                    searchQuery = it
+                },
+                modifier = Modifier.fillMaxWidth().padding(10.dp)
+                , placeholder = { Text("Search") }, singleLine = true, keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                )
+
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            if (searchRes.isEmpty())
+                Text("No Items Found")
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+
+                items(searchRes) { item ->
+                    ItemCard(
+                        item = item,
+                        onClick = { navController.navigate("${AppScreens.ItemDetailScreen.name}/${item.id}") }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
         }
     }
 }
